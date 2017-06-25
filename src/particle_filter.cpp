@@ -28,30 +28,29 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
 	std::default_random_engine gen;
 
-	std::normal_distribution<double> dist_x(0, std[0]);
-	std::normal_distribution<double> dist_y(0, std[1]);
-	std::normal_distribution<double> dist_theta(0, std[2]);
+	std::normal_distribution<double> dist_x(x, std[0]);
+	std::normal_distribution<double> dist_y(y, std[1]);
+	std::normal_distribution<double> dist_theta(theta, std[2]);
 
 	for (int i = 0; i < num_particles; i++)
 	{
 		Particle particle;
 		particle.id = i;
-		//particle.x = dist_x(gen);
-		//particle.y = dist_y(gen);
-		//particle.theta = dist_theta(gen);
-		particle.x = x;
-		particle.y = y;
-		particle.theta = theta;
+		particle.x = dist_x(gen);
+		particle.y = dist_y(gen);
+		particle.theta = dist_theta(gen);
+
 		particle.weight = 1;
 
-		particle.x += dist_x(gen);
-		particle.y += dist_y(gen);
-		particle.theta += dist_theta(gen);
+		// add noise  this is not necessary?
+		//particle.x += dist_x(gen);
+		//particle.y += dist_y(gen);
+		//particle.theta += dist_theta(gen);
 
 		particles.push_back(particle);
-		//weights.push_back(1);
+		weights.push_back(1);
 
-		//std::cout << "i = " << i << "(" << particle.x << "," << particle.y << "," << particle.theta << ")\n";
+		std::cout << "i = " << i << "(" << particle.x << "," << particle.y << "," << particle.theta << ")\n";
 	}
 	is_initialized = true;
 }
@@ -62,27 +61,34 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 	default_random_engine gen;
-	normal_distribution<double> dist_x(0, std_pos[0]);
-	normal_distribution<double> dist_y(0, std_pos[1]);
-	normal_distribution<double> dist_theta(0, std_pos[2]);
+	//normal_distribution<double> dist_x(0, std_pos[0]);
+	//normal_distribution<double> dist_y(0, std_pos[1]);
+	//normal_distribution<double> dist_theta(0, std_pos[2]);
 
 	for (int i = 0; i < num_particles; i++)
 	{
+		double new_x;
+		double new_y;
+		double new_theta;
 
 		if (yaw_rate < 0.0001) {
-			particles[i].x += velocity*delta_t*cos(particles[i].theta);
-			particles[i].y += velocity*delta_t*sin(particles[i].theta);
-			particles[i].theta += yaw_rate*delta_t;
+			new_x = particles[i].x + velocity*delta_t*cos(particles[i].theta);
+			new_y = particles[i].y + velocity*delta_t*sin(particles[i].theta);
+			new_theta = particles[i].theta;
 		} else {
-			particles[i].x += velocity/yaw_rate * (sin(particles[i].theta+yaw_rate*delta_t)-sin(particles[i].theta));
-			particles[i].y += velocity/yaw_rate * (cos(particles[i].theta)-cos(particles[i].theta+yaw_rate*delta_t));
-			particles[i].theta += yaw_rate*delta_t;
+			new_x = particles[i].x + velocity/yaw_rate * (sin(particles[i].theta+yaw_rate*delta_t)-sin(particles[i].theta));
+			new_y = particles[i].y + velocity/yaw_rate * (cos(particles[i].theta)-cos(particles[i].theta+yaw_rate*delta_t));
+			new_theta = particles[i].theta + yaw_rate*delta_t;
 		}
 
+		normal_distribution<double> dist_x(new_x, std_pos[0]);
+	  normal_distribution<double> dist_y(new_y, std_pos[1]);
+	  normal_distribution<double> dist_theta(new_theta, std_pos[2]);
 
-		particles[i].x += dist_x(gen);
-		particles[i].y += dist_y(gen);
-		particles[i].theta += dist_theta(gen);
+
+		particles[i].x = dist_x(gen);
+		particles[i].y = dist_y(gen);
+		particles[i].theta = dist_theta(gen);
 
 		//std::cout << "i = " << i << "(" << particles[i].x << "," << particles[i].y << "," << particles[i].theta << ")\n";
 
@@ -205,18 +211,20 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
  // 	total_weight += weights[i];
   //}
 
+  // looks like this is taken care in main.cpp
   //for (int i = 0; i < particles.size(); i++)
   //{
   //	double weight = particles[i].weight/total_weight;
   //	particles[i].weight = weight;
   //	weights[i] = weight;
   //}
-  vector<double> weights;
-  for (int i = 0; i < particles.size(); i++)
-  {
-  	weights.push_back(particles[i].weight);
-  }
-  cout << "size of weights are = " << weights.size() << "\n";
+  // t
+  //vector<double> weights;
+  //for (int i = 0; i < particles.size(); i++)
+  //{
+  //	weights.push_back(particles[i].weight);
+  //}
+  //cout << "size of weights are = " << weights.size() << "\n";
 }	
 
 void ParticleFilter::resample() {
