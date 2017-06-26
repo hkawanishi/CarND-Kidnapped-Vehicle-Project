@@ -24,7 +24,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
-	num_particles = 100;
+	num_particles = 50;
 
 	std::default_random_engine gen;
 
@@ -50,7 +50,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particles.push_back(particle);
 		weights.push_back(1);
 
-		std::cout << "i = " << i << "(" << particle.x << "," << particle.y << "," << particle.theta << ")\n";
+		//std::cout << "i = " << i << "(" << particle.x << "," << particle.y << "," << particle.theta << ")\n";
 	}
 	is_initialized = true;
 }
@@ -71,7 +71,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 		double new_y;
 		double new_theta;
 
-		if (yaw_rate < 0.0001) {
+		//if (yaw_rate < 0.0001) {
+		if (yaw_rate == 0){
 			new_x = particles[i].x + velocity*delta_t*cos(particles[i].theta);
 			new_y = particles[i].y + velocity*delta_t*sin(particles[i].theta);
 			new_theta = particles[i].theta;
@@ -130,7 +131,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 			trans_obs.x = particles[i].x+(obs.x*cos(particles[i].theta)-obs.y*sin(particles[i].theta));
 			trans_obs.y = particles[i].y+(obs.x*sin(particles[i].theta)+obs.y*cos(particles[i].theta));
-			cout << "trans_obs are " << trans_obs.x << ", " << trans_obs.y << "\n";
+			//cout << "trans_obs are " << trans_obs.x << ", " << trans_obs.y << "\n";
 			trans_observations.push_back(trans_obs);
 		}
 		//cout << "total observed: " << trans_observations.size() << "\n";
@@ -143,13 +144,15 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     {
     	float diff_x = fabs(map_landmarks.landmark_list[j].x_f -  particles[i].x);
     	float diff_y = fabs(map_landmarks.landmark_list[j].y_f -  particles[i].y);
-      if ((diff_x < sensor_range) && (diff_y < sensor_range))
+    	double calc_dist = sqrt(diff_x*diff_x + diff_y*diff_y);
+      //if ((diff_x < sensor_range) && (diff_y < sensor_range))
+      if (calc_dist < sensor_range)
       {
       	landmarks_in_range.x = map_landmarks.landmark_list[j].x_f;
       	landmarks_in_range.y = map_landmarks.landmark_list[j].y_f;
       	landmarks_in_range.id = map_landmarks.landmark_list[j].id_i;
 
-      	cout << map_landmarks.landmark_list[j].x_f << ", " << map_landmarks.landmark_list[j].y_f << ", " << map_landmarks.landmark_list[j].id_i << "\n";
+      	//cout << map_landmarks.landmark_list[j].x_f << ", " << map_landmarks.landmark_list[j].y_f << ", " << map_landmarks.landmark_list[j].id_i << "\n";
       	predicted.push_back(landmarks_in_range);
       }
     }
@@ -185,24 +188,26 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 				if (predicted[k].id == land_id){
 					predict_x = predicted[k].x;
 					predict_y = predicted[k].y;
-					cout << "j = " << j << " k = " << k << ", predict_x = " << predicted[k].x << ", predict_y = " << predicted[k].y << ", id = " << predicted[k].id << "\n";
+					//cout << "j = " << j << " k = " << k << ", predict_x = " << predicted[k].x << ", predict_y = " << predicted[k].y << ", id = " << predicted[k].id << "\n";
 					break;
 				}
 			}
 
 			double weight;
-			cout << "trans_obs x = " << trans_observations[j].x << " predict_x = " << predict_x << "\n";
-			cout << "trans_obs y = " << trans_observations[j].y << " predict_y = " << predict_y << "\n";
+			//cout << "trans_obs x = " << trans_observations[j].x << " predict_x = " << predict_x << "\n";
+			//cout << "trans_obs y = " << trans_observations[j].y << " predict_y = " << predict_y << "\n";
 			double x_term = (trans_observations[j].x-predict_x)*(trans_observations[j].x-predict_x)/(2.*sig_x*sig_x);
 			double y_term = (trans_observations[j].y-predict_y)*(trans_observations[j].y-predict_y)/(2.*sig_y*sig_y);
 			weight = first_term * exp(-(x_term+y_term));
-			cout << "j = " << j << ", weight = " << weight << "\n";
-			particles[i].weight *= weight;
+			//cout << "j = " << j << ", weight = " << weight << "\n";
+			if (weight > 0){
+				particles[i].weight *= weight;
+			}
 
 		}
 		//weights.push_back(particles[i].weight);
 		weights[i] = particles[i].weight;
-		cout << "i = " << i << " particles weight = " << particles[i].weight << "\n";
+		//cout << "i = " << i << " particles weight = " << particles[i].weight << "\n";
   }
 
   // normalize
