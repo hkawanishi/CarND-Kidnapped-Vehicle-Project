@@ -42,11 +42,6 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
 		particle.weight = 1;
 
-		// add noise  this is not necessary?
-		//particle.x += dist_x(gen);
-		//particle.y += dist_y(gen);
-		//particle.theta += dist_theta(gen);
-
 		particles.push_back(particle);
 		weights.push_back(1);
 
@@ -61,9 +56,6 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 	default_random_engine gen;
-	//normal_distribution<double> dist_x(0, std_pos[0]);
-	//normal_distribution<double> dist_y(0, std_pos[1]);
-	//normal_distribution<double> dist_theta(0, std_pos[2]);
 
 	for (int i = 0; i < num_particles; i++)
 	{
@@ -71,7 +63,6 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 		double new_y;
 		double new_theta;
 
-		//if (yaw_rate < 0.0001) {
 		if (yaw_rate == 0){
 			new_x = particles[i].x + velocity*delta_t*cos(particles[i].theta);
 			new_y = particles[i].y + velocity*delta_t*sin(particles[i].theta);
@@ -194,8 +185,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			}
 
 			double weight;
-			//cout << "trans_obs x = " << trans_observations[j].x << " predict_x = " << predict_x << "\n";
-			//cout << "trans_obs y = " << trans_observations[j].y << " predict_y = " << predict_y << "\n";
 			double x_term = (trans_observations[j].x-predict_x)*(trans_observations[j].x-predict_x)/(2.*sig_x*sig_x);
 			double y_term = (trans_observations[j].y-predict_y)*(trans_observations[j].y-predict_y)/(2.*sig_y*sig_y);
 			weight = first_term * exp(-(x_term+y_term));
@@ -205,32 +194,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			}
 
 		}
-		//weights.push_back(particles[i].weight);
 		weights[i] = particles[i].weight;
 		//cout << "i = " << i << " particles weight = " << particles[i].weight << "\n";
   }
 
-  // normalize
-  //double total_weight = 0.0;
-  //for (int i = 0; i < weights.size(); i++)
-  //{
- // 	total_weight += weights[i];
-  //}
-
-  // looks like this is taken care in main.cpp
-  //for (int i = 0; i < particles.size(); i++)
-  //{
-  //	double weight = particles[i].weight/total_weight;
-  //	particles[i].weight = weight;
-  //	weights[i] = weight;
-  //}
-  // t
-  //vector<double> weights;
-  //for (int i = 0; i < particles.size(); i++)
-  //{
-  //	weights.push_back(particles[i].weight);
-  //}
-  //cout << "size of weights are = " << weights.size() << "\n";
 }	
 
 void ParticleFilter::resample() {
